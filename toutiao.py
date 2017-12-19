@@ -7,6 +7,8 @@ Created on 2017年10月13日
 import requests
 from ProListUtil import ProListUtil
 import random
+import time
+import pymysql
 
 class Toutiao:
 
@@ -20,20 +22,19 @@ class Toutiao:
 
     tag = 'funny'
 
-    ''' 获取组图数据 '''
-    def getZutu(self, time, count, resData, proList):
+    ''' 递归查取数据 '''
+    def recGetData(self, time, count, resData, proList):
         
         url = (self.url + '%s'%time)
         
-        #print(url)
-
-
+        print(len(resData))
         
         response = requests.get(url, proxies={'http': random.choice(proList)}, headers=self.headers)
         
         status = response.status_code
         
         if status != 200:
+            print(status)
             return resData
         
         res = response.json()
@@ -45,11 +46,10 @@ class Toutiao:
             for obj in data:
                 
                 article_genre = obj.get('article_genre')
-                tag = obj.get('tag')
                 source_url = obj.get('source_url')
                 
-                if source_url != None and article_genre != None and (article_genre == self.article_genre or article_genre == 'article'):
-                    resData[source_url] = obj
+                if source_url != None and article_genre != None and (article_genre == 'article'):
+                    resData.append(source_url)
                     
             count = count - 1
             
@@ -57,12 +57,39 @@ class Toutiao:
                 return resData
             
             time = res['next']['max_behot_time']
-            
-            return self.getZutu(time, count, resData, proList)
-    
+
+            return self.recGetData(time, count, resData, proList)
+        else:
+            return resData
+
+    ''' 加载数据 '''
+    def loadData(self):
+        proList = self.proList.findIpsByRemote()
+        resData = self.recGetData(0, 100, [], proList)
+        setData = set(resData)
+        ext = time.strftime('%Y%m%d', time.localtime())
+        filePath = 'E:/jia/temp/db/urls/toutiao.' + ext
+
+        urls = open(filePath, 'w')
+        if setData != None:
+            for url in setData:
+                urls.write('https://www.toutiao.com' + url)
+        urls.close()
+        return setData
+
 if __name__ == '__main__':
     toutiao = Toutiao()
-    proList = toutiao.proList.findIpsByRemote()
-    resData = toutiao.getZutu(0, 10, {}, proList)
-    print(resData)
+    data = toutiao.loadData()
+
+    db = pymysql.connect(host='qdm166276318.my3w.com', user='qdm166276318', db='qdm166276318_db', password='WOSHIlujia94', port=3306)
+    cur = db.cursor()
+
+    for o in data:
+
+        sql = ("INSERT INTO funny (url) VALUES ('%s')" % ('https://www.toutiao.com' + o.replace('/group/', '/a')))
+        print(sql)
+        cur.execute(sql)
+    db.commit()
+    cur.close()
+    db.close()
     pass
