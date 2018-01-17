@@ -13,9 +13,9 @@ class Omqq:
 
   imagesPath = 'E:/jia/temp/images/'
 
-  phone = '***'
+  phone = '******'
 
-  password = '***'
+  password = '*****'
 
   #pro password
   #MD5(a.token + MD5(a.salt + d))
@@ -53,11 +53,11 @@ class Omqq:
     request = self.session.get(url, headers=self.headers)
 
     jsonData = json.loads(request.text)
-
+    print(jsonData)
     if jsonData['response']['code'] == '0':
-      print("getRandomCode success : %s "%jsonData['data'])
+      print("getRandomCode success : %s " % ['data'])
     else:
-      print("getRandomCode error : %s"%jsonData['reponse']['msg'])
+      print("getRandomCode error : %s" % jsonData['reponse']['msg'])
 
     return jsonData['data']
 
@@ -97,7 +97,7 @@ class Omqq:
     return res['data']
 
   def imageInfoNoWater(self, urls):
-    data = {'url': urls}
+    data = {'url': urls, 'opCode' : 151, 'isUpOrg' : 1, 'subModule' : 'normal_cover'}
     url = 'https://om.qq.com/image/imageInfoNoWater?relogin=1'
     response = self.session.post(url, data)
     res = response.json()
@@ -121,8 +121,6 @@ class Omqq:
     res = response.json()
     if res['response']['code'] != 0:
       print('获取失败')
-    res['data']['src'] = picUrl
-
     return [res['data']]
 
   def publish(self, data):
@@ -157,11 +155,18 @@ class Omqq:
     if len(urls) > 0:
       imgurl_ext = self.exactupload(urls[0])
 
+
+    print(imgUrls)
+    print(imgUrls.split(',')[1])
+
+    imgurl_ext[0]['src'] = imgUrls.split(',')[1]
+
     form_data = self.createFromData({'title': title, 'imgurl_ext': imgurl_ext, 'content': content})
 
     print(form_data)
 
-    url = 'https://om.qq.com/article/publish?relogin=1'
+    #url = 'https://om.qq.com/article/publish?relogin=1'
+    url = 'https://om.qq.com/article/save?relogin=1'
 
     response = self.session.post(url, form_data)
 
@@ -174,9 +179,9 @@ class Omqq:
     form_data['title2'] = ''
     form_data['tag'] = ''
     form_data['video'] = ''
-    form_data['cover_type'] = -1
-    form_data['imgurl_ext'] = data['imgurl_ext']
-    form_data['category_id'] = 82
+    form_data['cover_type'] = 1
+    form_data['imgurl_ext'] = json.dumps(data['imgurl_ext'])
+    #form_data['category_id'] = 82
     form_data['content'] = data['content']
     form_data['orignal'] = 0
     form_data['user_original'] = 0
