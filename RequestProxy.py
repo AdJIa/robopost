@@ -2,6 +2,9 @@ import requests
 import random
 import json
 from ProListUtil import ProListUtil
+from bs4 import BeautifulSoup
+
+import urllib.parse as urlparse
 
 
 
@@ -11,27 +14,31 @@ if __name__ == '__main__':
 
   print('start.......')
 
-  pro = proUtil.findIpsByRemote()
+  # pro = proUtil.findIpsByRemote()
 
-  print('proxy ip list : %s' % pro)
+  # print('proxy ip list : %s' % pro)
 
   headers = {'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Mobile Safari/537.36'}
 
   print('request heads : %s' %headers)
 
-  url = 'https://m.toutiao.com/list/?tag=news_story&ac=wap&count=20&format=json_raw&as=A1A599CCDF74D90&cp=59CFF4FD59D04E1&min_behot_time=1506758030'
+  url = 'https://m.ke.com/cq/xiaoqu/c3611099972231/?sug=%E8%9E%8D%E5%9F%8E%E5%8D%8E%E5%BA%9C'
 
   print('request url : %s'%url)
 
-  request = requests.get(url, proxies={'http': random.choice(pro)}, headers=headers)
+  # request = requests.get(url, proxies={'http': random.choice(pro)}, headers=headers)
+  request = requests.get(url, headers=headers)
 
   request.encoding = request.apparent_encoding
 
-  res = request.text
+  soup = BeautifulSoup(request.text, "html.parser")
+  taga = soup.select("li.pictext a")
 
-  if res != "":
-    print('request data : %s'%res)
-    print(json.loads(request.text)['return_count'])
+  for x in range(1, len(taga)):
+    a = taga[x]
+    href = a.get("href")
+    dataaction = a.get("data-action")
+    querys = urlparse.parse_qs(dataaction)
 
 
 
